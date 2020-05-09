@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 ```{r}
@@ -96,14 +96,25 @@ ggplot() +
   stat_function(aes(q, color = "High Income Demand"), fun = dem_high_p, size = 1, show.legend = TRUE) + 
   stat_function(aes(q, color = "Aggregate Demand"), fun = dem_agg_p, size = 1, show.legend = TRUE) + 
   stat_function(aes(q, color = "Supply"), fun = supply_p, size = 1, show.legend = TRUE) +
-  scale_y_continuous(limits = c(0,20)) +
-  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(limits = c(0,20),
+                     expand = c(0,0)) +
+  scale_x_continuous(labels = scales::comma,
+                     expand = c(0,0)) +
   theme_light() +
   scale_color_manual(values = wes_palette("Darjeeling2")) +
-  scale_x_continuous(labels = scales::comma) +
   labs(x = "Quantity (gallons)",
        y = "Price ($)",
        color = "Curves")
   
 
 ```
+
+
+```{r}
+# Benefit to consumers and producers under this status quo
+
+
+
+
+```
+
