@@ -36,6 +36,7 @@ gas_df_agg <- gas_df %>%
 gas_price <- 3
 extern_country <- 1.5
 extern_world <- 0.5
+gas_tax <- 1
 
 ```
 
@@ -48,9 +49,24 @@ lm_low <- lm(price_dollars ~ q_low_gallons, data = gas_df_agg)
 # high income
 lm_high <- lm(price_dollars ~ q_high_gallons, data = gas_df_agg)
 
-# aggregate 
+# aggregate demand
 lm_agg <- lm(price_dollars ~ q_agg_gallons, data = gas_df_agg)
 
+# # for piecewise, at what what quantity does the high_demand have a price equal to the low_demand
+# 
+# low_price = lm_low$coefficients[1]
+# dem_high_q <-function(p) {q = lm_high$coefficients[1] + lm_high$coefficients[2]*q}
+# 
+# # this quantity = our change point
+# 
+# gas_df_agg <- gas_df_agg %>% 
+#   mutate(diff = q_agg_gallons-change_point) %>% 
+#   mutate(dummy = ifelse(q>=change_point, 1, 0)) %>% 
+#   mutate(after_change_point = dummy*diff)
+# 
+# gas_ag_model_pw <- lm(price_dollars ~ q_agg_gallons + after_change_point, data = gas_df_agg)
+
+lm_agg
 
 ```
 
@@ -76,6 +92,9 @@ q_gasoline_df <- data.frame(q_gasoline)
 # calculate marginal cost at each q (supply curve)
 q_gasoline_supply <- q_gasoline_df %>% 
   mutate(mc = (gas_price/q_agg_eq)*q_gasoline)
+
+gas_price
+q_agg_eq
 
 ```
 
@@ -109,7 +128,7 @@ ggplot() +
   scale_x_continuous(labels = scales::comma,
                      expand = c(0,0)) +
   theme_light() +
-  scale_color_brewer(palette = "Paired") +
+  scale_color_brewer(palette = "Dark2") +
   labs(x = "Quantity (gallons)",
        y = "Price ($)",
        color = "Curves")
@@ -119,7 +138,7 @@ ggplot() +
 
 
 ```{r}
-# Benefit to consumers and producers under this status quo
+# Benefit to consumers and producers under this status quo, and environmental costs
 
 agg_consumer_surplus <- integrate(dem_agg_p, lower = 0, upper = q_agg_eq)$value - (gas_price*q_agg_eq)
 
@@ -137,6 +156,70 @@ country_environmental_cost <- extern_country * q_agg_eq
 benefits_equilibrium <- c(agg_consumer_surplus, producer_surplus, low_consumer_surplus, high_consumer_surplus, world_environmental_cost, country_environmental_cost)
 
 benefits_equilibrium
+
+```
+
+3. Tax of $1.00/gal
+
+```{r}
+# gas_tax = 1
+
+# q_agg_tax <- ((gas_price+gas_tax) - lm_agg$coefficients[1])/lm_agg$coefficients[2]
+# 
+# q_agg_tax
+# 
+# supply_p_tax <-function(q) {p = gas_tax+(gas_price/q_agg_eq)*q}
+# 
+# # solve for q and p when new supply equals agg demand
+# solve(gas_tax+(gas_price/q_agg_eq)*q, lm_agg$coefficients[1] + lm_agg$coefficients[2]*q)
+
+# 3.a
+# couldn't figure out how to solve for q after setting equal in r so used excel
+q_tax <- 548449.42624834
+
+# 3.b
+# plug in new equilibrium quantity with tax into the demand equation to find the price
+price_tax <- lm_agg$coefficients[1] + lm_agg$coefficients[2]*q_tax
+
+price_tax
+
+#3.c
+# solve for quantity demanded by high income consumers after tax
+q_high_tax <- price_tax - lm_high$coefficients[1]/lm_high$coefficients[2]
+
+# solve for surplus 
+high_consumer_surplus_tax <- integrate(dem_high_p, lower = 0, upper = q_high_tax)$value - (price_tax*q_high_tax)
+
+high_consumer_surplus_tax
+
+#3.d
+
+q_low_tax <- price_tax - lm_low$coefficients[1]/lm_low$coefficients[2]
+
+low_consumer_surplus_tax <- integrate(dem_low_p, lower = 0, upper = q_low_tax)$value - (price_tax*q_low_tax)
+
+low_consumer_surplus_tax
+
+#3.e
+
+producer_surplus_tax <- integrate(supply_p, lower = 0, upper = q_tax)$value
+
+producer_surplus_tax
+
+#3.f
+
+country_damage_tax <- extern_country * q_tax
+
+country_damage_tax
+
+#3.g
+
+world_damage_tax <- extern_world * q_tax
+
+world_damage_tax
+
+#4.h
+
 
 ```
 
