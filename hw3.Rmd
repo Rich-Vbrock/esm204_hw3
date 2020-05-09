@@ -42,15 +42,16 @@ extern_world <- 0.5
 # Linear models to estimate demand curves from data
 
 # low income
-lm_low <- lm(q_low_gallons ~ price_dollars, data = gas_df_agg)
+lm_low <- lm(price_dollars ~ q_low_gallons, data = gas_df_agg)
 
 # high income
-lm_high <- lm(q_high_gallons ~ price_dollars, data = gas_df_agg)
+lm_high <- lm(price_dollars ~ q_high_gallons, data = gas_df_agg)
 
 # aggregate 
 lm_agg <- lm(price_dollars ~ q_agg_gallons, data = gas_df_agg)
 
 lm_agg
+
 
 ```
 
@@ -76,26 +77,27 @@ q_gasoline_supply <- q_gasoline_df %>%
   mutate(mc = (gas_price/q_agg_eq)*q_gasoline)
 
 
+
 ```
 
 ```{r}
+# Demand and supply functions p(q)
+
+dem_low_p <- function(q) {p = lm_low$coefficients[1] + lm_low$coefficients[2]*q}
+dem_high_p <-function(q) {p = lm_high$coefficients[1] + lm_high$coefficients[2]*q}
+dem_agg_p <-function(q) {p = lm_agg$coefficients[1] + lm_agg$coefficients[2]*q}
+supply_p <-function(q) {p = (gas_price/q_agg_eq)*q}
+q <- 0:800000
+
 # Graph for visual
-
-q_gasoline_suppy_demand <- q_gasoline_df %>% 
-  mutate(mc = (gas_price/q_agg_eq)*q_gasoline) %>% 
-  mutate(demand_agg = lm_agg$coefficients[1]) + (lm_agg$coefficients[2]*q_gasoline)
   
-  
-# pivot_longer(q_low_gallons:q_agg_gallons,
-#                names_to = "consumer",
-#                values_to = "quantity")
+ggplot() +
+  stat_function(aes(q, color = "low income"), fun = dem_low_p, size = 1, show.legend = TRUE) + 
+  stat_function(aes(q, color = "high income"), fun = dem_high_p, size = 1, show.legend = TRUE) + 
+  stat_function(aes(q, color = "agg"), fun = dem_agg_p, size = 1, show.legend = TRUE) + 
+  stat_function(aes(q, color = "supply"), fun = supply_p, size = 1, show.legend = TRUE) +
+  scale_y_continuous(limits = c(0,20)) +
+  scale_x_continuous(labels = scales::comma)
 
-ggplot(data = q_gasoline_suppy_demand, aes(x = q_gasoline, y = price_dollars, color = consumer)) +
-  geom_point() +
-  theme_light() +
-  scale_color_manual(values = wes_palette("Darjeeling1")) +
-  scale_x_continuous(labels = scales::comma) +
-  labs(x = "Quantity (gallons)",
-       y = "Price ($)",
-       color = "Consumer")
+
 ```
