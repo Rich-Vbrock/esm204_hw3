@@ -54,15 +54,43 @@ lm_agg
 
 ```
 
+
+```{r}
+# If price equals $3, what quantity is demanded?
+
+q_agg_eq <- (gas_price - lm_agg$coefficients[1])/lm_agg$coefficients[2]
+
+q_agg_eq
+
+# Supply curve
+# Begins at $0 and 0 quantity, has a slope of 3/q_agg
+
+gas_price/q_agg_eq
+
+# make a list of possible gallons consumed
+q_gasoline <- seq(0,600000, by = 10000)
+# add it into a df
+q_gasoline_df <- data.frame(q_gasoline)
+# calculate marginal cost at each q (supply curve)
+q_gasoline_supply <- q_gasoline_df %>% 
+  mutate(mc = (gas_price/q_agg_eq)*q_gasoline)
+
+
+```
+
 ```{r}
 # Graph for visual
 
-gas_agg_graph <- gas_df_agg %>% 
-  pivot_longer(q_low_gallons:q_agg_gallons,
-               names_to = "consumer",
-               values_to = "quantity")
+q_gasoline_suppy_demand <- q_gasoline_df %>% 
+  mutate(mc = (gas_price/q_agg_eq)*q_gasoline) %>% 
+  mutate(demand_agg = lm_agg$coefficients[1]) + (lm_agg$coefficients[2]*q_gasoline)
+  
+  
+# pivot_longer(q_low_gallons:q_agg_gallons,
+#                names_to = "consumer",
+#                values_to = "quantity")
 
-ggplot(data = gas_agg_graph, aes(x = quantity, y = price_dollars, color = consumer)) +
+ggplot(data = q_gasoline_suppy_demand, aes(x = q_gasoline, y = price_dollars, color = consumer)) +
   geom_point() +
   theme_light() +
   scale_color_manual(values = wes_palette("Darjeeling1")) +
@@ -71,18 +99,3 @@ ggplot(data = gas_agg_graph, aes(x = quantity, y = price_dollars, color = consum
        y = "Price ($)",
        color = "Consumer")
 ```
-
-
-```{r}
-# If price equals $3, what quantity is demanded?
-
-q_agg <- (gas_price - lm_agg$coefficients[1])/lm_agg$coefficients[2]
-
-q_agg
-
-# Supply curve
-# Begins at $0 and 0 quantity, has a slope of 3/q_agg
-
-
-```
-
