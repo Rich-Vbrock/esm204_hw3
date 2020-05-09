@@ -1,0 +1,88 @@
+---
+title: "esm204_hw3"
+author: "David Segan"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# ------------
+# attach packages and read in csv
+# ------------
+library(tidyverse)
+library(janitor)
+library(stargazer)
+library(wesanderson)
+
+# csv is demand of gasoline for high and low income consumer groups
+gas_df <- read_csv("Homework 3 Data.csv") %>% 
+  clean_names()
+
+# add aggregate demand column
+# convert gallons to thousands of gallons
+gas_df_agg <- gas_df %>% 
+  mutate(q_low_gallons = q_low_gallons) %>% 
+  mutate(q_high_gallons = q_high_gallons) %>% 
+  mutate(q_agg_gallons = (q_low_gallons + q_high_gallons))
+```
+
+```{r}
+# Assigning variables
+gas_price <- 3
+extern_country <- 1.5
+extern_world <- 0.5
+
+```
+
+```{r}
+# Linear models to estimate demand curves from data
+
+# low income
+lm_low <- lm(q_low_gallons ~ price_dollars, data = gas_df_agg)
+
+# high income
+lm_high <- lm(q_high_gallons ~ price_dollars, data = gas_df_agg)
+
+# aggregate 
+lm_agg <- lm(price_dollars ~ q_agg_gallons, data = gas_df_agg)
+
+lm_agg
+
+```
+
+```{r}
+# Graph for visual
+
+gas_agg_graph <- gas_df_agg %>% 
+  pivot_longer(q_low_gallons:q_agg_gallons,
+               names_to = "consumer",
+               values_to = "quantity")
+
+ggplot(data = gas_agg_graph, aes(x = quantity, y = price_dollars, color = consumer)) +
+  geom_point() +
+  theme_light() +
+  scale_color_manual(values = wes_palette("Darjeeling1")) +
+  scale_x_continuous(labels = scales::comma) +
+  labs(x = "Quantity (gallons)",
+       y = "Price ($)",
+       color = "Consumer")
+```
+
+
+```{r}
+# If price equals $3, what quantity is demanded?
+
+q_agg <- (gas_price - lm_agg$coefficients[1])/lm_agg$coefficients[2]
+
+q_agg
+
+# Supply curve
+# Begins at $0 and 0 quantity, has a slope of 3/q_agg
+
+
+```
+
