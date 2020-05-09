@@ -17,6 +17,7 @@ library(tidyverse)
 library(janitor)
 library(stargazer)
 library(wesanderson)
+library(RColorBrewer)
 
 # csv is demand of gasoline for high and low income consumer groups
 gas_df <- read_csv("Homework 3 Data.csv") %>% 
@@ -50,8 +51,6 @@ lm_high <- lm(price_dollars ~ q_high_gallons, data = gas_df_agg)
 # aggregate 
 lm_agg <- lm(price_dollars ~ q_agg_gallons, data = gas_df_agg)
 
-lm_agg
-
 
 ```
 
@@ -61,7 +60,9 @@ lm_agg
 
 q_agg_eq <- (gas_price - lm_agg$coefficients[1])/lm_agg$coefficients[2]
 
-q_agg_eq
+q_low_eq <- (gas_price - lm_low$coefficients[1])/lm_low$coefficients[2]
+
+q_high_eq <- (gas_price - lm_high$coefficients[1])/lm_high$coefficients[2]
 
 # Supply curve
 # Begins at $0 and 0 quantity, has a slope of 3/q_agg
@@ -76,8 +77,6 @@ q_gasoline_df <- data.frame(q_gasoline)
 q_gasoline_supply <- q_gasoline_df %>% 
   mutate(mc = (gas_price/q_agg_eq)*q_gasoline)
 
-
-
 ```
 
 ```{r}
@@ -89,6 +88,12 @@ dem_agg_p <-function(q) {p = lm_agg$coefficients[1] + lm_agg$coefficients[2]*q}
 supply_p <-function(q) {p = (gas_price/q_agg_eq)*q}
 q <- 0:800000
 
+# Environmental cost functions
+
+country_extern <- function(q) {p = extern_country}
+world_extern <- function(q) {p = extern_world}
+total_extern <- function(q) {p = extern_country+extern_world}
+
 # Graph it!
   
 ggplot() +
@@ -96,12 +101,15 @@ ggplot() +
   stat_function(aes(q, color = "High Income Demand"), fun = dem_high_p, size = 1, show.legend = TRUE) + 
   stat_function(aes(q, color = "Aggregate Demand"), fun = dem_agg_p, size = 1, show.legend = TRUE) + 
   stat_function(aes(q, color = "Supply"), fun = supply_p, size = 1, show.legend = TRUE) +
+  stat_function(aes(q, color = "Country Externality"), fun = country_extern, size = .2, show.legend = TRUE) + 
+  stat_function(aes(q, color = "World Externality"), fun = world_extern, size = .2, show.legend = TRUE) +
+  stat_function(aes(q, color = "Total Externality"), fun = total_extern, size = .2, show.legend = TRUE) +
   scale_y_continuous(limits = c(0,20),
                      expand = c(0,0)) +
   scale_x_continuous(labels = scales::comma,
                      expand = c(0,0)) +
   theme_light() +
-  scale_color_manual(values = wes_palette("Darjeeling2")) +
+  scale_color_brewer(palette = "Paired") +
   labs(x = "Quantity (gallons)",
        y = "Price ($)",
        color = "Curves")
@@ -113,8 +121,22 @@ ggplot() +
 ```{r}
 # Benefit to consumers and producers under this status quo
 
+agg_consumer_surplus <- integrate(dem_agg_p, lower = 0, upper = q_agg_eq)$value - (gas_price*q_agg_eq)
 
+producer_surplus <- integrate(supply_p, lower = 0, upper = q_agg_eq)$value
 
+low_consumer_surplus <- integrate(dem_low_p, lower = 0, upper = q_low_eq)$value - (gas_price*q_low_eq)
+
+high_consumer_surplus <- integrate(dem_high_p, lower = 0, upper = q_high_eq)$value - (gas_price*q_high_eq)
+
+world_environmental_cost <- extern_world * q_agg_eq
+
+country_environmental_cost <- extern_country * q_agg_eq
+
+# put these into a table
+benefits_equilibrium <- c(agg_consumer_surplus, producer_surplus, low_consumer_surplus, high_consumer_surplus, world_environmental_cost, country_environmental_cost)
+
+benefits_equilibrium
 
 ```
 
