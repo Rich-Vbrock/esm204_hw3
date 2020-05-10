@@ -218,8 +218,71 @@ world_damage_tax <- extern_world * q_tax
 
 world_damage_tax
 
-#4.h
+#3.h
+# multiple gas tax($1) by the new equilibrium quantity 
+total_revenue <- q_tax*gas_tax
 
+total_revenue
+
+```
+
+4. Redistribution of tax
+
+```{r}
+
+```
+
+5. Electric car shifts demand curves down by half
+
+```{r}
+
+# New demand is shifting down 0.5*original intercept
+# Using solver in excel, new equilibrium quantity 293811.938
+
+electric_car_q <- 293811.938
+
+dem_agg_electric <-function(q) {p = 0.5*lm_agg$coefficients[1] + lm_agg$coefficients[2]*q}
+
+electric_car_p <- dem_agg_electric(electric_car_q)
+electric_car_p
+
+# 5.a
+q_high_electric <- (electric_car_p - (0.5*lm_high$coefficients[1]))/lm_high$coefficients[2]
+
+q_high_electric
+
+#5.b
+q_low_electric <- (electric_car_p - (0.5*lm_low$coefficients[1]))/lm_low$coefficients[2]
+
+q_low_electric
+
+#5. c
+
+electric_car_p
+
+#5. d
+
+local_damage_ecar <- extern_country * electric_car_q
+
+local_damage_ecar
+
+#5. e
+
+world_damage_ecar <- extern_world * electric_car_q
+
+world_damage_ecar
+```
+
+6. What gas tax makes local environmental quality equal to electric car
+
+```{r}
+
+# What tax causes aggregate quantity demanded to be same as electric_car_q
+
+# Using excel solver
+# Set supply equation with (electric_car_q) = aggregate demand equation with (electric_car_q) and solved for what tax makes them equal
+
+# Tax of 7.5!!
 
 ```
 
