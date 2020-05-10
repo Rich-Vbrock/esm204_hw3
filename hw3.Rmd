@@ -23,12 +23,13 @@ library(RColorBrewer)
 gas_df <- read_csv("Homework 3 Data.csv") %>% 
   clean_names()
 
+
 # add aggregate demand column
 # convert gallons to thousands of gallons
 gas_df_agg <- gas_df %>% 
   mutate(q_low_gallons = q_low_gallons) %>% 
   mutate(q_high_gallons = q_high_gallons) %>% 
-  mutate(q_agg_gallons = (q_low_gallons + q_high_gallons))
+  mutate(q_agg_gallons = q_low_gallons + q_high_gallons)
 ```
 
 ```{r}
@@ -52,23 +53,69 @@ lm_high <- lm(price_dollars ~ q_high_gallons, data = gas_df_agg)
 # aggregate demand
 lm_agg <- lm(price_dollars ~ q_agg_gallons, data = gas_df_agg)
 
-# # for piecewise, at what what quantity does the high_demand have a price equal to the low_demand
-# 
-# low_price = lm_low$coefficients[1]
-# dem_high_q <-function(p) {q = lm_high$coefficients[1] + lm_high$coefficients[2]*q}
-# 
-# # this quantity = our change point
-# 
-# gas_df_agg <- gas_df_agg %>% 
-#   mutate(diff = q_agg_gallons-change_point) %>% 
-#   mutate(dummy = ifelse(q>=change_point, 1, 0)) %>% 
-#   mutate(after_change_point = dummy*diff)
-# 
-# gas_ag_model_pw <- lm(price_dollars ~ q_agg_gallons + after_change_point, data = gas_df_agg)
 
-lm_agg
 
 ```
+
+
+```{r}
+# # Piecewise aggregate demand function
+# 
+# # low income
+# pw_lm_low <- lm(q_low_gallons ~ price_dollars, data = gas_df_agg)
+# 
+# # high income
+# pw_lm_high <- lm(q_high_gallons ~ price_dollars, data = gas_df_agg)
+# 
+# #for piecewise, at what what quantity does the high_demand have a price equal to the low_demand y-intercept
+# low_price <- lm_low$coefficients[1]
+# dem_high_q <-function(p) {q = (p-lm_high$coefficients[1])/lm_high$coefficients[2]}
+# 
+# # this quantity = our change point
+# change_point <- dem_high_q(low_price)
+# 
+# change_point
+# 
+# # make a list of possible gallons consumed
+# p_gasoline <- seq(0,20, by = .5)
+# # add it into a df
+# p_gasoline_df <- data.frame(p_gasoline)
+# # calculate demand at each p based off of models
+# q_gasoline_agg <- p_gasoline_df %>% 
+#   mutate(high_demand = pw_lm_high$coefficients[1] + pw_lm_high$coefficients[2]*p_gasoline) %>% 
+#   mutate(low_demand = pw_lm_low$coefficients[1] + pw_lm_low$coefficients[2]*p_gasoline)
+# 
+# # set all negative values to 0
+# q_gasoline_agg[q_gasoline_agg<0] <- 0
+# 
+# # calculate agg demand
+# q_gasoline_agg <- q_gasoline_agg %>% 
+#   mutate(agg_demand = high_demand + low_demand) %>% 
+#   mutate(diff = agg_demand-change_point) %>%
+#   mutate(dummy = ifelse(agg_demand>=change_point, 1, 0)) %>%
+#   mutate(after_change_point = dummy*diff) %>% 
+#   mutate(before_change_point = ifelse(agg_demand<=change_point, agg_demand, 0)) %>% 
+#   mutate(after = ifelse(agg_demand>= change_point, agg_demand, 0))
+# 
+# # aggregate demand model
+# pw_lm_agg <- lm(p_gasoline ~ agg_demand + after_change_point, data = q_gasoline_agg)
+# 
+# predict_df_pw <- predict(pw_lm_agg, q_gasoline_agg)
+# 
+# full_df_pw <- data.frame(q_gasoline_agg, predict_df_pw)
+# 
+# # gas_df_agg <- gas_df_agg %>%
+# #   mutate(diff = q_agg_gallons-change_point) %>%
+# #   mutate(dummy = ifelse(q_agg_gallons>=change_point, 1, 0)) %>%
+# #   mutate(after_change_point = dummy*diff)
+# # 
+# # gas_agg_model_pw <- lm(price_dollars ~ q_agg_gallons + after_change_point, data = gas_df_agg)
+# # 
+# # gas_agg_model_pw
+# 
+# pw_lm_agg
+```
+
 
 
 ```{r}
@@ -93,8 +140,7 @@ q_gasoline_df <- data.frame(q_gasoline)
 q_gasoline_supply <- q_gasoline_df %>% 
   mutate(mc = (gas_price/q_agg_eq)*q_gasoline)
 
-gas_price
-q_agg_eq
+
 
 ```
 
@@ -107,6 +153,23 @@ dem_agg_p <-function(q) {p = lm_agg$coefficients[1] + lm_agg$coefficients[2]*q}
 supply_p <-function(q) {p = (gas_price/q_agg_eq)*q}
 q <- 0:800000
 
+q_agg_eq
+
+# 
+# # piecewise
+# qlow <- 0:800000
+# qhigh <- 0:800000
+# qagg <- 0:800000
+# p <- 0:20
+# dem_low_q <-function(p) {qlow = (p-lm_low$coefficients[1])/lm_low$coefficients[2]}
+# dem_high_q <-function(p) {qhigh = (p-lm_high$coefficients[1])/lm_high$coefficients[2]}
+# 
+# qlow+qhigh = ((p-lm_high$coefficients[1])/lm_high$coefficients[2])+(p-lm_low$coefficients[1])/lm_low$coefficients[2]
+# 
+# dem_agg_pw <- function(qagg) {p = gas_agg_model_pw$coefficients[1] + gas_agg_model_pw$coefficients[2]*q}
+dem_agg_m <- function(q) {p = 14.5998 - (0.000019*q)}
+dem_agg_pw <- function(q) {p = pw_lm_agg$coefficients[1] + pw_lm_agg$coefficients[2]*q + pw_lm_agg$coefficients[3]*q}
+
 # Environmental cost functions
 
 country_extern <- function(q) {p = extern_country}
@@ -118,11 +181,11 @@ total_extern <- function(q) {p = extern_country+extern_world}
 ggplot() +
   stat_function(aes(q, color = "Low Income Demand"), fun = dem_low_p, size = 1, show.legend = TRUE) + 
   stat_function(aes(q, color = "High Income Demand"), fun = dem_high_p, size = 1, show.legend = TRUE) + 
-  stat_function(aes(q, color = "Aggregate Demand"), fun = dem_agg_p, size = 1, show.legend = TRUE) + 
+  stat_function(aes(q, color = "Aggregate Demand"), fun = dem_agg_p, size = 1, show.legend = TRUE) +
   stat_function(aes(q, color = "Supply"), fun = supply_p, size = 1, show.legend = TRUE) +
-  stat_function(aes(q, color = "Country Externality"), fun = country_extern, size = .2, show.legend = TRUE) + 
-  stat_function(aes(q, color = "World Externality"), fun = world_extern, size = .2, show.legend = TRUE) +
-  stat_function(aes(q, color = "Total Externality"), fun = total_extern, size = .2, show.legend = TRUE) +
+  stat_function(aes(q, color = "Country Externality"), fun = country_extern, size = .4, show.legend = TRUE) + 
+  stat_function(aes(q, color = "World Externality"), fun = world_extern, size = .4, show.legend = TRUE) +
+  stat_function(aes(q, color = "Total Externality"), fun = total_extern, size = .4, show.legend = TRUE) +
   scale_y_continuous(limits = c(0,20),
                      expand = c(0,0)) +
   scale_x_continuous(labels = scales::comma,
@@ -131,8 +194,9 @@ ggplot() +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "Quantity (gallons)",
        y = "Price ($)",
-       color = "Curves")
-  
+       color = "Curves",
+       title = "Domestic Gasoline Market")
+
 
 ```
 
@@ -147,6 +211,8 @@ producer_surplus <- integrate(supply_p, lower = 0, upper = q_agg_eq)$value
 low_consumer_surplus <- integrate(dem_low_p, lower = 0, upper = q_low_eq)$value - (gas_price*q_low_eq)
 
 high_consumer_surplus <- integrate(dem_high_p, lower = 0, upper = q_high_eq)$value - (gas_price*q_high_eq)
+
+agg_consumer_surplus <- low_consumer_surplus + high_consumer_surplus
 
 world_environmental_cost <- extern_world * q_agg_eq
 
@@ -185,20 +251,24 @@ price_tax
 
 #3.c
 # solve for quantity demanded by high income consumers after tax
-q_high_tax <- price_tax - lm_high$coefficients[1]/lm_high$coefficients[2]
+q_high_tax <- (price_tax - lm_high$coefficients[1])/lm_high$coefficients[2]
 
 # solve for surplus 
 high_consumer_surplus_tax <- integrate(dem_high_p, lower = 0, upper = q_high_tax)$value - (price_tax*q_high_tax)
+
+q_high_tax
 
 high_consumer_surplus_tax
 
 #3.d
 
-q_low_tax <- price_tax - lm_low$coefficients[1]/lm_low$coefficients[2]
+q_low_tax <- (price_tax - lm_low$coefficients[1])/lm_low$coefficients[2]
 
 low_consumer_surplus_tax <- integrate(dem_low_p, lower = 0, upper = q_low_tax)$value - (price_tax*q_low_tax)
 
 low_consumer_surplus_tax
+
+q_high_tax + q_low_tax
 
 #3.e
 
